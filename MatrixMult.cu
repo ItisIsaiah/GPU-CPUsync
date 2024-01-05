@@ -3,28 +3,21 @@
 #include <chrono>
 #include <time.h>
 
+
+
+//initializes the matrix
 void init_matrix(int *d, int N)
 {
     
     printf("Started initializing Matrix with size %d\n",N);
     for (int i = 0; i < N; i++)
     {
-        //printf("initializing: d[%d] \n",i);
         d[i] = (rand() % 10);
-        //printf("d[%d] is initialized\n",i);
     }
 }
 
-/*
-void fill_random(int array[r][c],int max){
-    for(int i=0;i <r;i++){
-        for(int j=0;j<c;j++){
-            array[i][j] =(rand() %max)+1;
-        }
-    }
-}
-*/
 
+//optional Add matrix instead of multiply
 __global__ void addMatrix(int *a, int *b, int *c)
 {
 
@@ -32,21 +25,17 @@ __global__ void addMatrix(int *a, int *b, int *c)
     c[global_index] = a[global_index] + b[global_index];
 }
 
+//GPU matrix multiplication
 __global__ void multMatrix(int *a,int *b,int *c,int width){
     int row= threadIdx.y + blockDim.y * blockIdx.y;
     int col= threadIdx.x + blockDim.x * blockIdx.x;
      
-    //printf("\nrow:%d ||Col:%d\n",row,col);
+    
     if(row<width && col<width){
         for(int i=0; i<width;i++){
         c[row*width+col]+= a[row*width+i] * b[i*width+col];
-        }
-        //printf("\nrow:%d ||Col:%d|| Cell: %d\n",row,col,c[row*width+col]);
+        }       
     }
-    
-
-    
-    
  
 }
 
@@ -63,12 +52,8 @@ void testing(int N, int kernelLaunches, FILE *fptr){
 
         clock_t start, end;
         double duration;
-
-     // for input later
         srand(time(NULL));
-       // printf("Allocating space\n");
         size_t bytes = i * i * sizeof(int);
-       
         int *a, *b, *c;
 
 
@@ -77,23 +62,23 @@ void testing(int N, int kernelLaunches, FILE *fptr){
         int rc3=cudaMallocManaged(&c,bytes);
 
         
-       //printf("%d|%d|%d",rc,rc2,rc3);
+      
 
-
-        int threads =16;//was 16
+        //Creates 16 threads per block and makes sure that there are 
+        int threads =16;
         int blocks = (i + threads - 1) / threads;
         
-
+        //in a 2D configuration to match the i*i space that we allocated previously
         dim3 THREADS(threads, threads);
         dim3 BLOCKS(blocks, blocks);
-        // printf("initializing matrix\n");
+
+
+        //Initailizes the matrices with random numbers.
         init_matrix(a, i*i);
         init_matrix(b, i*i);
         
-        const unsigned long long my_duration= 2000000000ULL; // FOR KWAIT
         
-        // printf("GOing to run Kernels \n");
-
+        //timer for the benchmark and begins the benchmark
         start = clock();
 
         for (int j = 0; j <= kernelLaunches; j++)
@@ -102,8 +87,10 @@ void testing(int N, int kernelLaunches, FILE *fptr){
             cudaDeviceSynchronize();
         }
         end = clock();
-        
+        //ends the benchmark
 
+
+        //Presents results
         duration = ((double)(end - start)) / CLOCKS_PER_SEC;
         printf("Total Duration: %f \n", duration);
         fprintf(fptr, "%f :", duration);
@@ -132,8 +119,7 @@ int main(int argc, char **argv)
 {
     
     FILE *fptr = NULL ;
-    FILE *gnupipe=NULL;
-    char *GNUcommands[]= {};
+
     
    // fprintf(fptr, "Spin Method Duration Size ");
     int N = 50;
