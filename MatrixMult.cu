@@ -55,47 +55,9 @@ __global__ void kwait(unsigned long long duration){
     while(clock64()< start + duration);
 }
 
-int main(int argc, char **argv)
-{
-    FILE *fptr = fopen("results.txt", "w");
-    if (fptr == NULL)
-    {
-        printf("Error opening file my g");
-        exit(1);
-    }
-    fprintf(fptr, "Spin Method Duration Size ");
 
-    int N = 50;
-    int kernelLaunches; 
-    for (int i = 1; i < argc; i++) //Escape Values
-    {
-        if (strcmp(argv[i], "-size") == 0 && i + 1 < argc)
-        {
-            N = atoi(argv[i + 1]);
-        }
-
-        else if (strcmp(argv[i], "-n") == 0 && i+ 1 < argc)
-        {
-            kernelLaunches = atoi(argv[i + 1]);
-        }
-        else if (strcmp(argv[i], "-sync") == 0 && i + 1 < argc) {
-            if (strcmp(argv[i + 1], "spin") == 0)
-            {
-                cudaSetDeviceFlags(cudaDeviceScheduleSpin);
-                fprintf(fptr, "spin: \n");
-            }
-            else if (strcmp(argv[i + 1], "block") == 0)
-            {
-                cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-                fprintf(fptr, "block: \n");
-            }
-            else
-            {
-                printf("\n INVALID SYNC");
-            }
-        }
-    }
-
+//The benchmark for testing reasons
+void testing(int N, int kernelLaunches, FILE *fptr){
     for (int i = 10; i <= N; i += 10)
     {
 
@@ -163,5 +125,99 @@ int main(int argc, char **argv)
         cudaFree(b);
         cudaFree(c);
         
+    }
+}
+
+int main(int argc, char **argv)
+{
+    
+    FILE *fptr = NULL ;
+    FILE *gnupipe=NULL;
+    char *GNUcommands[]= {};
+    
+   // fprintf(fptr, "Spin Method Duration Size ");
+    int N = 50;
+    int kernelLaunches; 
+    bool both=false;
+
+
+    for (int i = 1; i < argc; i++) //Escape Values
+    {
+        if (strcmp(argv[i], "-size") == 0 && i + 1 < argc)
+        {
+            N = atoi(argv[i + 1]);
+        }
+
+        else if (strcmp(argv[i], "-n") == 0 && i+ 1 < argc)
+        {
+            kernelLaunches = atoi(argv[i + 1]);
+        }
+        else if (strcmp(argv[i], "-sync") == 0 && i + 1 < argc) {
+            if (strcmp(argv[i + 1], "spin") == 0)
+            {
+                cudaSetDeviceFlags(cudaDeviceScheduleSpin);
+                fptr=fopen("spinResults.txt", "w");
+                //fprintf(fptr, "spin: \n");
+            }
+            else if (strcmp(argv[i + 1], "block") == 0)
+            {
+                cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+                fptr=fopen("blockResults.txt", "w");
+                //fprintf(fptr, "block: \n");
+            }
+            else if (strcmp(argv[i + 1], "both") == 0)
+            {
+                both=true;
+            }
+            else
+            {
+                printf("\n INVALID SYNC");
+            }
+        }
+    }
+
+    printf("I AM BREAKING HERE 177");
+    
+    
+    //if you pciked a specific type of spin then just spin
+    if(!both){
+        //catches if the files doesnt exist
+        if (fptr == NULL)
+        {
+            printf("Error opening file my g");
+            exit(1);
+        }
+        testing(N,kernelLaunches,fptr);
+       
+    }
+    //otherwise initialize and do both;
+    else if(both){
+        printf("I AM BENCHMARKING BOTH");
+        cudaSetDeviceFlags(cudaDeviceScheduleSpin);
+        fptr=fopen("spinResults.txt", "w");
+        //catches if the file doesnt exist
+        if (fptr == NULL)
+        {
+            printf("Error opening file my g");
+            exit(1);
+        }
+        //fprintf(fptr, "spin: \n");
+        testing(N,kernelLaunches,fptr);
+        
+
+
+        cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+        fptr=fopen("blockResults.txt", "w");
+        
+        //catches if the file doesnt exist
+        if (fptr == NULL)
+        {
+            printf("Error opening file my g");
+            exit(1);
+        }
+       // fprintf(fptr, "block: \n");
+        testing(N,kernelLaunches,fptr);
+
+        system("gnuplot -p blockResults.txt,spinResults.txt");
     }
 }
