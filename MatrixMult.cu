@@ -8,8 +8,6 @@
 //initializes the matrix
 void init_matrix(int *d, int N)
 {
-    
-    printf("Started initializing Matrix with size %d\n",N);
     for (int i = 0; i < N; i++)
     {
         d[i] = (rand() % 10);
@@ -76,37 +74,39 @@ void testing(int N, int kernelLaunches, FILE *fptr){
         //Initailizes the matrices with random numbers.
         init_matrix(a, i*i);
         init_matrix(b, i*i);
-        
-        
+
+        unsigned long long my_duration = 20000000ULL;
+
         //timer for the benchmark and begins the benchmark
         start = clock();
 
         for (int j = 0; j <= kernelLaunches; j++)
         {
-            multMatrix<<<BLOCKS,THREADS>>>(a,b,c,i);
+            kwait<<<1,1>>>(my_duration*i);
+            //multMatrix<<<BLOCKS,THREADS>>>(a,b,c,i);
             cudaDeviceSynchronize();
+            //printf("Cuda Return Code: %d", rc);
+            //printf("A=%d |B=%d| C=%d   |",a[i*i-1],b[i*i-1],c[i*i-1]);
         }
         end = clock();
         //ends the benchmark
-
-
+        
+    
         //Presents results
         duration = ((double)(end - start)) / CLOCKS_PER_SEC;
-        printf("Total Duration: %f \n", duration);
-        fprintf(fptr, "%f :", duration);
 
+        
+       // printf("Total Duration: %f \n", duration);
+        printf("%f :", duration);
+        
         double avgDuration = duration / kernelLaunches;
+        
+        //printf("Average time for each kernel:\n %f", avgDuration);
+        printf(" %f :", avgDuration);
 
-        printf("Average time for each kernel:\n %f", avgDuration);
-        fprintf(fptr, " %f :", avgDuration);
-
-        printf("Size %d\n", i);
-        fprintf(fptr, "%d\n", i);
-
-       // printf("\nFirst 3 of a :%d |%d | %d\n",a[i*i-3],a[i*i-2],a[i*i-1]);
-        //printf("\nFirst 3 of b :%d |%d | %d\n",b[i*i-3],b[i*i-2],b[i*i-1]);
-       // printf("\nFirst 3 of c :%d |%d | %d\n \n",c[i*i-3],c[i*i-2],c[i*i-1]);  
-
+        //printf("Size %d\n", i);
+        printf("%d\n", i);
+        
 
         cudaFree(a);
         cudaFree(b);
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
     FILE *fptr = NULL ;
 
     
-   // fprintf(fptr, "Spin Method Duration Size ");
+   
     int N = 50;
     int kernelLaunches; 
     bool both=false;
@@ -142,14 +142,15 @@ int main(int argc, char **argv)
             if (strcmp(argv[i + 1], "spin") == 0)
             {
                 cudaSetDeviceFlags(cudaDeviceScheduleSpin);
-                fptr=fopen("spinResults.txt", "w");
-                //fprintf(fptr, "spin: \n");
+               // fptr=fopen("spinResults.txt", "w");
+               
             }
             else if (strcmp(argv[i + 1], "block") == 0)
             {
-                cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-                fptr=fopen("blockResults.txt", "w");
-                //fprintf(fptr, "block: \n");
+                //cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+                cudaSetDeviceFlags(cudaDeviceScheduleAuto);
+              //  fptr=fopen("blockResults.txt", "w");
+               
             }
             else if (strcmp(argv[i + 1], "both") == 0)
             {
@@ -162,37 +163,37 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("I AM BREAKING HERE 177");
+   // printf("I AM BREAKING HERE 177");
     
     
     //if you pciked a specific type of spin then just spin
     if(!both){
         //catches if the files doesnt exist
-        if (fptr == NULL)
-        {
-            printf("Error opening file my g");
-            exit(1);
-        }
+        
         testing(N,kernelLaunches,fptr);
        
     }
     //otherwise initialize and do both;
     else if(both){
-        printf("I AM BENCHMARKING BOTH");
+        //printf("I AM BENCHMARKING BOTH");
         cudaSetDeviceFlags(cudaDeviceScheduleSpin);
+        
+        /*
         fptr=fopen("spinResults.txt", "w");
         //catches if the file doesnt exist
+        
         if (fptr == NULL)
         {
             printf("Error opening file my g");
             exit(1);
         }
-        //fprintf(fptr, "spin: \n");
+        */
         testing(N,kernelLaunches,fptr);
         
 
 
         cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+        /*
         fptr=fopen("blockResults.txt", "w");
         
         //catches if the file doesnt exist
@@ -201,9 +202,9 @@ int main(int argc, char **argv)
             printf("Error opening file my g");
             exit(1);
         }
-       // fprintf(fptr, "block: \n");
+       */
         testing(N,kernelLaunches,fptr);
 
-        system("gnuplot -p blockResults.txt,spinResults.txt");
+        //system("gnuplot -p blockResults.txt,spinResults.txt");
     }
 }
