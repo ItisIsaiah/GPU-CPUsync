@@ -141,17 +141,25 @@ int main(int argc, char **argv)
         else if (strcmp(argv[i], "-sync") == 0 && i + 1 < argc) {
             if (strcmp(argv[i + 1], "spin") == 0)
             {
-                cudaSetDeviceFlags(cudaDeviceScheduleSpin);
-               // fptr=fopen("spinResults.txt", "w");
-               
+                cudaSetDeviceFlags(cudaDeviceScheduleSpin);    
             }
             else if (strcmp(argv[i + 1], "block") == 0)
             {
-                //cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
-                cudaSetDeviceFlags(cudaDeviceScheduleAuto);
-              //  fptr=fopen("blockResults.txt", "w");
-               
+                cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
             }
+            else if(strcmp(argv[i + 1], "auto") == 0){
+                cudaSetDeviceFlags(cudaDeviceScheduleAuto);
+            }
+            else if(strcmp(argv[i + 1], "yield") == 0){
+                cudaSetDeviceFlags(cudaDeviceScheduleYield);
+            }
+            else if(strcmp(argv[i + 1], "oldBlock") == 0){
+                cudaSetDeviceFlags(cudaDeviceBlockingSync);
+            }
+            
+            
+
+
             else if (strcmp(argv[i + 1], "both") == 0)
             {
                 both=true;
