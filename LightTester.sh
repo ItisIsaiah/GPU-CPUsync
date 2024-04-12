@@ -1,10 +1,12 @@
 #!/bin/bash
-size=100
+size=1000
 n=5
 
-taskset -c 0 ./Matrix -size $size -n $n -sync block >Tblock.txt 
+
+
+taskset -c 0 ./Matrix -size $size -n $n -sync spin > "$(date +"TBlock_%Y-%m-%d_%H-%M-%S.txt")"
 wait
-taskset -c 0 ./Matrix -size $size -n $n -sync spin >TSpin.txt 
+taskset -c 0 ./Matrix -size $size -n $n -sync spin > "$(date +"TSpin_%Y-%m-%d_%H-%M-%S.txt")"
 wait
 
 

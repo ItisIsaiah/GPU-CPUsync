@@ -87,7 +87,7 @@ void testing(int N, int kernelLaunches, FILE *fptr){
         init_matrix(a, i*i);
         init_matrix(b, i*i);
 
-        unsigned long long my_duration = 1000000ULL;
+        unsigned long long my_duration = 1000ULL;
 
         //timer for the benchmark and begins the benchmark
        //start = clock();
@@ -98,7 +98,7 @@ void testing(int N, int kernelLaunches, FILE *fptr){
         for (int j = 0; j <= kernelLaunches; j++)
         {
             //printf("Seg fault is here 7");
-            kwait<<<1,1>>>((my_duration*1000)*(i/5));
+            kwait<<<1,1>>>((my_duration)*(i/5));
            // multMatrix<<<BLOCKS,THREADS>>>(a,b,c,i);
             cudaDeviceSynchronize();
             //printf("Cuda Return Code: %d", rc);
