@@ -4,6 +4,7 @@
 #include <time.h>
 #include <iostream>
 
+
 #include <sys/time.h>
 #define USECPSEC 1000000ULL
 
@@ -56,7 +57,7 @@ __global__ void kwait(unsigned long long duration){
 
 
 //The benchmark for testing reasons
-void testing(int N, int kernelLaunches, FILE *fptr){
+void testing(int N, int kernelLaunches, FILE *fptr,int timeMultiplier){
     for (int i = 5; i <= N; i += 5)
     {
         //printf("Seg fault is here 1");
@@ -87,7 +88,7 @@ void testing(int N, int kernelLaunches, FILE *fptr){
         init_matrix(a, i*i);
         init_matrix(b, i*i);
 
-        unsigned long long my_duration = 1000ULL;
+        unsigned long long my_duration = 1000ULL*timeMultiplier;
 
         //timer for the benchmark and begins the benchmark
        //start = clock();
@@ -98,7 +99,7 @@ void testing(int N, int kernelLaunches, FILE *fptr){
         for (int j = 0; j <= kernelLaunches; j++)
         {
             //printf("Seg fault is here 7");
-            kwait<<<1,1>>>((my_duration)*(i/5));
+            kwait<<<1,1>>>((my_duration)/100*(i/5));
            // multMatrix<<<BLOCKS,THREADS>>>(a,b,c,i);
             cudaDeviceSynchronize();
             //printf("Cuda Return Code: %d", rc);
@@ -150,6 +151,7 @@ int main(int argc, char **argv)
     int N = 50;
     int kernelLaunches; 
     bool both=false;
+    int cycles=1;
 
 
     for (int i = 1; i < argc; i++) //Escape Values
@@ -163,6 +165,10 @@ int main(int argc, char **argv)
         else if (strcmp(argv[i], "-n") == 0 && i+ 1 < argc)
         {
             kernelLaunches = atoi(argv[i + 1]);
+        }
+        else if (strcmp(argv[i], "-cycles") == 0 && i+ 1 < argc)
+        {
+            cycles = atoi(argv[i + 1]);
         }
         else if (strcmp(argv[i], "-sync") == 0 && i + 1 < argc) {
             if (strcmp(argv[i + 1], "spin") == 0)
@@ -200,7 +206,7 @@ int main(int argc, char **argv)
     if(!both){
         //catches if the files doesnt exist
         
-        testing(N,kernelLaunches,fptr);
+        testing(N,kernelLaunches,fptr,cycles);
        
     }
     //otherwise initialize and do both;
@@ -218,7 +224,7 @@ int main(int argc, char **argv)
             exit(1);
         }
         */
-        testing(N,kernelLaunches,fptr);
+        testing(N,kernelLaunches,fptr,cycles);
         
 
 
@@ -233,7 +239,7 @@ int main(int argc, char **argv)
             exit(1);
         }
        */
-        testing(N,kernelLaunches,fptr);
+        testing(N,kernelLaunches,fptr,cycles);
 
         //system("gnuplot -p blockResults.txt,spinResults.txt");
     }
